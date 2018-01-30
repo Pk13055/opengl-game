@@ -1,0 +1,3 @@
+/home/pratik/01Classwork/0Graphics/0Assignments/1Assignment/build/CMakeFiles/rebuild_cache.dir
+/home/pratik/01Classwork/0Graphics/0Assignments/1Assignment/build/CMakeFiles/graphics_asgn1.dir
+/home/pratik/01Classwork/0Graphics/0Assignments/1Assignment/build/CMakeFiles/edit_cache.dir
