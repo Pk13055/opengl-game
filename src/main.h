@@ -5,9 +5,14 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
+#include <utility>
+
+using namespace std;
 
 #define HEIGHT 768
 #define WIDTH 1024
+#define CIRCLE 0
+#define RECTANGLE 1
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -71,6 +76,9 @@ struct bounding_box_t {
     float x;
     float y;
     double radius;
+    int role = CIRCLE;
+    double rotation = 0.0f;
+    pair<double, double> size = make_pair(radius, radius);
 };
 
 bool detect_collision(bounding_box_t a, bounding_box_t b);
@@ -83,5 +91,6 @@ extern const color_t COLOR_RED;
 extern const color_t COLOR_GREEN;
 extern const color_t COLOR_BLACK;
 extern const color_t COLOR_BACKGROUND;
-
+extern const color_t COLOR_GROUND_1;
+extern const color_t COLOR_LOG;
 #endif

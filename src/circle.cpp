@@ -67,6 +67,6 @@ void Circle::set_position(float x, float y) {
 
 bounding_box_t Circle::bounding_box() {
     float x = this->position.x, y = this->position.y;
-    bounding_box_t bbox = { x, y, (double) this->radius };
+    bounding_box_t bbox = { x, y, (double) this->radius, CIRCLE };
     return bbox;
 }

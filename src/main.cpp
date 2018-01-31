@@ -1,11 +1,20 @@
 #include "timer.h"
 #include "player.h"
 #include "enemy.h"
+#include "rect.h"
+#include "enemybox.h"
 #include <vector>
+#include <map>
+#include <utility>
+
 
 #define WIDTH 1024
 #define HEIGHT 768
-#define ENEMIES 4
+#define CIRCLE 0
+#define RECTANGLE 1
+
+#define ENEMIES 3
+
 #define pow2(x) x * x
 
 using namespace std;
@@ -20,7 +29,8 @@ GLFWwindow *window;
 
 Player *player;
 vector<Enemy> enemies;
-
+map<int, EnemyBox> enemy_boxes;
+vector<Rect> flooring;
 float screen_zoom = 1, screen_center_x = 0, screen_center_y = 2.5f;
 
 bool up_flag = false;
@@ -59,8 +69,10 @@ void draw() {
     glm::mat4 MVP;  // MVP = Projection * View * Model
 
     // Scene render
+    for(auto floor: flooring) floor.draw(VP);
     player->draw(VP);
     for(auto &enemy: enemies) enemy.draw(VP);
+    for(auto &box: enemy_boxes) (box.second).draw(VP);
 }
 
 void tick_input(GLFWwindow *window) {
@@ -85,7 +97,13 @@ void tick_input(GLFWwindow *window) {
 }
 
 // spawn a new enemy when one is deleted
-void spawn_enemy() { enemies.push_back(Enemy(0, 0, COLOR_RED, 0.4f)); }
+void spawn_enemy() {
+    enemies.push_back(Enemy(0, 0, COLOR_RED, 0.4f));
+    // randomly add enemy boxes
+    if(rand() % ENEMIES < ENEMIES / 2)
+        enemy_boxes.insert(make_pair(enemies.back().id,
+         EnemyBox(enemies.back(), COLOR_LOG)));
+}
 
 // delete an enemy with a given id
 bool delete_enemy(int id) {
@@ -93,7 +111,12 @@ bool delete_enemy(int id) {
         if(enemy->id == id) {
             enemies.erase(enemy);
             Enemy::enemy_count--;
-            // spawn_enemy();
+
+            auto it = enemy_boxes.erase(id);
+            if(it) EnemyBox::box_count--;
+
+            // randomly spawn new enemies
+            if(rand() % 2) spawn_enemy();
             return true;
         }
     return false;
@@ -102,23 +125,43 @@ bool delete_enemy(int id) {
 int tick_elements() {
     player->tick();
     for(auto &enemy : enemies) enemy.tick();
-    for(auto enemy: enemies)
+    for(auto &box: enemy_boxes) (box.second).tick();
+    for(auto &enemy: enemies)
         if (detect_collision(player->bounding_box(), enemy.bounding_box())) {
-            if(player->position.y > enemy.position.y) {
-                cout<<"\n\nKILLED ENEMY "<<enemy.id<<endl;
-                delete_enemy(enemy.id);
-                player->position.x += (- 2 * 0.8f * player->xspeed) * (player->position.x
-                    < enemy.position.x) + 0.8f * player->xspeed;
-                player->position.y += 0.8f * player->yspeed;
-                break;
-            }
-            else {
-                cout<<"\n\nCOLLIDED Enemy  : "<<enemy.id<<endl;
+            cout<<rand() % 100<<" Circle collision"<<endl;
+            if(player->position.y < enemy.position.y) {
+                cout<<"\n\nCOLLIDED Enemy  Circle: "<<enemy.id<<endl;
                 player->lives--;
                 cout<<"\nLives : "<<player->lives<<endl;
             }
+            else {
+                cout<<"\n\nKILLED ENEMY Circle"<<enemy.id<<endl;
+                int fac = (player->position.x < enemy.position.x)? -2 : 2;
+                player->xspeed *= fac * 1.03f;
+                if(player->yspeed > 0) player->yspeed *= 1.15f;
+                else player->yspeed = 0.2f;
+                delete_enemy(enemy.id);
+            }
+            break;
         }
-    if(!player->lives || !Enemy::enemy_count) {
+    for(auto &box: enemy_boxes)
+        if (detect_collision(player->bounding_box(), box.second.bounding_box())) {
+            cout<<rand() % 100<<" Rectangle collision"<<endl;
+            if(player->position.y < box.second.position.y) {
+                cout<<"\n\nCOLLIDED Enemy  Rectangle: "<<box.second.id<<endl;
+                player->lives--;
+                cout<<"\nLives : "<<player->lives<<endl;
+            }
+            else {
+                cout<<"\n\nKILLED ENEMY Rectangle"<<box.second.id<<endl;
+                delete_enemy(box.second.id);
+                player->xspeed += 1.05f * player->xspeed * sin(box.second.rotation);
+                if(player->yspeed > 0) player->yspeed *= 1.15f;
+                else player->yspeed = 0.2f;
+            }
+            break;
+        }
+    if(!player->lives || !enemies.size()) {
         cout<<((!player->lives)? "Game Over!" : "Winner!")<<endl;
         return true;
     }
@@ -130,8 +173,10 @@ int tick_elements() {
 void initGL(GLFWwindow *window, int width, int height) {
     /* Objects should be created before any other gl function and shaders */
     // Create the models
-    player = new Player(0, 0, COLOR_GREEN);
-    for(int enemy = 1; enemy <= ENEMIES; enemy++) enemies.push_back(Enemy(0, 0, COLOR_RED, 0.4f));
+    player = new Player(0, 0, COLOR_BLACK);
+    flooring.push_back(Rect(0.0f, -2.5f / 2 - player->radius / 2.0f, 10.0f, 5.0f, COLOR_GROUND_1));
+    flooring.push_back(Rect(0.0f, -player->radius, 10.0f, 0.8f, COLOR_GREEN));
+    for(int enemy = 1; enemy <= ENEMIES; enemy++) spawn_enemy();
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
     // Get a handle for our "MVP" uniform
@@ -177,6 +222,10 @@ int main(int argc, char **argv) {
             bool game_stat = tick_elements();
             tick_input(window);
 
+            // OpenGL Draw commands
+            draw();
+
+
             if(game_stat) break;
 
         }
@@ -189,8 +238,15 @@ int main(int argc, char **argv) {
 }
 
 bool detect_collision(bounding_box_t a, bounding_box_t b) {
-    double sum = a.radius + b.radius;
-    return ((double) pow2(abs(a.x - b.x)) + (double) pow2(abs(a.y - b.y))) < (double) pow2(sum);
+    if(b.role == CIRCLE)
+        return (pow2(fabs(a.x - b.x)) + pow2(fabs(a.y - b.y))) < pow2(a.radius + b.radius);
+    else if(b.role == RECTANGLE) {
+        auto dimen = b.size;
+        double diag = sqrt(pow2(dimen.first) + pow2(dimen.second)) / 2.0f,
+        x_tol = diag * cos(b.rotation), y_tol = diag * sin(b.rotation);
+        return (a.x > b.x - x_tol && a.x < b.x + x_tol) ||
+            (a.y > b.y - y_tol && a.y < b.y - y_tol);
+    }
 }
 
 void reset_screen() {
