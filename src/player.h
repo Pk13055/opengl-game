@@ -10,7 +10,8 @@ public:
 	Player() : Circle() {}
 	Player(float x, float y, color_t color, float radius = 0.4f) :
 	Circle(x, y, color, radius) {}
-	int lives = 100;
+	int lives = 1000,
+	score = 0;
 	virtual void tick();
 private:
     VAO *object;

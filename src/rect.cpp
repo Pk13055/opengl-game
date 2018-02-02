@@ -18,6 +18,7 @@ Rect::Rect(float x, float y, float length, float width, color_t color) {
 	this->set_position(x, y);
 	this->length = length;
 	this->width = width;
+	this->color = color;
 	int total_shapes = 2, i = 0;
 	GLfloat vertex_buffer_data[(int) total_shapes * 3 * 3] = {};
 
@@ -38,7 +39,6 @@ Rect::Rect(float x, float y, float length, float width, color_t color) {
 		vertex_buffer_data[i++] = this->position.y - fac * this->width / 2.0f;
 		vertex_buffer_data[i++] = 0.0f;
 	}
-
 	this->object = create3DObject(GL_TRIANGLES, total_shapes * 3, vertex_buffer_data, color, GL_FILL);
 }
 

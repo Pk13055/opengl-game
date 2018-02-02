@@ -5,7 +5,6 @@
 #include "main.h"
 #include "rect.h"
 #include "enemy.h"
-
 #ifndef ENEMYBOX_H
 #define ENEMYBOX_H
 

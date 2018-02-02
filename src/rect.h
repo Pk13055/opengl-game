@@ -13,7 +13,8 @@ public:
     glm::vec3 position;
     float rotation;
     double length, width;
-    virtual void draw(glm::mat4 VP);
+    color_t color;
+    void draw(glm::mat4 VP);
     void set_position(float x, float y);
     virtual void tick();
     bounding_box_t bounding_box();

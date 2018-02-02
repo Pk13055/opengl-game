@@ -17,7 +17,7 @@ int Enemy::enemy_count = 0;
 // constructors
 Enemy::Enemy(float x, float y, color_t color, float radius = 0.4f)
 : Circle(-5.0f + rand() % 11,
-		0.3f + radius + rand() % 7,
+		0.3f + radius + rand() % 30,
 		color,
 		0.3f + 0.06f * (float) (rand() % 5)) {
 	Enemy::enemy_count++;

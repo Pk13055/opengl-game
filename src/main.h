@@ -75,7 +75,7 @@ enum direction_t { DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT };
 struct bounding_box_t {
     float x;
     float y;
-    double radius;
+    double radius = 0.0f;
     int role = CIRCLE;
     double rotation = 0.0f;
     pair<double, double> size = make_pair(radius, radius);
@@ -93,4 +93,6 @@ extern const color_t COLOR_BLACK;
 extern const color_t COLOR_BACKGROUND;
 extern const color_t COLOR_GROUND_1;
 extern const color_t COLOR_LOG;
+extern const color_t COLOR_HONEY;
+extern const color_t COLOR_BLUE;
 #endif
